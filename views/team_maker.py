@@ -13,26 +13,42 @@ def create_teams(df, players_available):
     team_a = []
     team_b = []
     team_a_score, team_b_score = 0, 0
+    team_a_scores, team_b_scores = [], []
     players_to_scores_map = dict(zip(df.PlayerName, df.TotalScore))
     # Keep only the available players in the dict
     players_to_scores_map = {k: v for k,v in players_to_scores_map.items() if k in players_available}
     # Sort the players as per their scores
     players_to_scores_map = dict(sorted(players_to_scores_map.items(), key=lambda item: item[1], reverse=True))
+    max_players_per_team = len(players_available) // 2
     for p, s in players_to_scores_map.items():
-        if team_a_score < team_b_score:
+        # If any team has reached the max limit, stop adding to that team.
+        if (len(team_a) == max_players_per_team):
+            team_b.append(p)
+            team_b_score += s
+            team_b_scores.append(s)
+        elif (len(team_b) == max_players_per_team):
             team_a.append(p)
             team_a_score += s
+            team_a_scores.append(s)
+        elif (team_a_score < team_b_score):
+            team_a.append(p)
+            team_a_score += s
+            team_a_scores.append(s)
         else:
             team_b.append(p)
             team_b_score += s
+            team_b_scores.append(s)
+        
     
     # Handle the case of odd players
     if len(team_a) > len(team_b):
         team_b = team_b + team_a[-1:]
+        team_b_scores = team_b_scores + team_a_scores[-1:]
     elif len(team_a) < len(team_b):
         team_a = team_a + team_b[-1:]
+        team_a_scores = team_a_scores + team_b_scores[-1:]
     
-    return team_a, team_b
+    return team_a, team_b, team_a_scores, team_b_scores
 
 
 class TeamMaker:
@@ -104,18 +120,18 @@ class TeamMaker:
             self.bowling_weight + self.df['FieldingScore'] + self.fielding_weight
         
         if self.submit_button:
-            team_a, team_b = create_teams(self.df, self.players_available)
+            team_a, team_b, team_a_scores, team_b_scores = create_teams(self.df, self.players_available)
             with self.output_container:
                 col1, col2, _ = st.columns([15, 15, 70])
 
                 with col1:
-                    df_out = pd.DataFrame(team_a, columns=['Team A'])
-                    styler = df_out.style.hide_index()
+                    df_out_team_a = pd.DataFrame(team_a, columns=['Team A'])
+                    styler = df_out_team_a.style.hide(axis='index')
                     st.write(styler.to_html(), unsafe_allow_html=True)
                 
                 with col2:
-                    df_out = pd.DataFrame(team_b, columns=['Team B'])
-                    styler = df_out.style.hide_index()
+                    df_out_team_b = pd.DataFrame(team_b, columns=['Team B'])
+                    styler = df_out_team_b.style.hide(axis='index')
                     st.write(styler.to_html(), unsafe_allow_html=True)
                 
                 st.write("")
@@ -128,3 +144,17 @@ class TeamMaker:
                 with col1:
                     st.write(f"Avg score of Team A: {team_a_score / len(team_a):.2f}")
                     st.write(f"Avg score of Team b: {team_b_score / len(team_b):.2f}")
+            
+            if st.session_state["user_name"] == "admin":
+                with st.expander("Details"):
+                    col1, col2, _ = st.columns([20, 20, 60])
+
+                    with col1:
+                        df_out_team_a['Scores'] = team_a_scores
+                        styler = df_out_team_a.style.hide(axis='index')
+                        st.write(styler.to_html(), unsafe_allow_html=True)
+
+                    with col2:
+                        df_out_team_b['Scores'] = team_b_scores
+                        styler = df_out_team_b.style.hide(axis='index')
+                        st.write(styler.to_html(), unsafe_allow_html=True)
