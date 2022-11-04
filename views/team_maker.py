@@ -146,8 +146,8 @@ class TeamMaker:
                     st.write(f"Avg score of Team b: {team_b_score / len(team_b):.2f}")
             
             if st.session_state["user_name"] == "admin":
-                with st.expander("Details"):
-                    col1, col2, _ = st.columns([20, 20, 60])
+                with st.expander("Scores"):
+                    col1, col2, _ = st.columns([30, 30, 40])
 
                     with col1:
                         df_out_team_a['Scores'] = team_a_scores
@@ -157,4 +157,11 @@ class TeamMaker:
                     with col2:
                         df_out_team_b['Scores'] = team_b_scores
                         styler = df_out_team_b.style.hide(axis='index')
+                        st.write(styler.to_html(), unsafe_allow_html=True)
+                    
+                    st.markdown("&nbsp;")
+                    st.markdown("### Detail scores of all the players")
+                    col1, _ = st.columns([50, 50])
+                    with col1:
+                        styler = self.df.style.hide(axis='index')
                         st.write(styler.to_html(), unsafe_allow_html=True)
