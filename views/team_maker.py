@@ -117,7 +117,7 @@ class TeamMaker:
         
         # Calculate the aggregate scores
         self.df['TotalScore'] = self.df["BattingScore"] * self.batting_weight + self.df["BowlingScore"] * \
-            self.bowling_weight + self.df['FieldingScore'] + self.fielding_weight
+            self.bowling_weight + self.df['FieldingScore'] * self.fielding_weight
         
         if self.submit_button:
             team_a, team_b, team_a_scores, team_b_scores = create_teams(self.df, self.players_available)
