@@ -1,10 +1,15 @@
 import streamlit as st
 import pandas as pd
+import requests
+import io
 
-PLAYERS_INFO_FILE = "data/players.csv"
+PLAYERS_INFO_CSV_URL = "https://raw.githubusercontent.com/rpharale/data/main/misc/players.csv"
 
+#@st.cache
 def get_players_stat():
-    df = pd.read_csv(PLAYERS_INFO_FILE)
+    print("Fetching content")
+    s = requests.get(PLAYERS_INFO_CSV_URL).content
+    df = pd.read_csv(io.StringIO(s.decode('utf-8')))
     return df
 
 def create_teams(df, players_available):
