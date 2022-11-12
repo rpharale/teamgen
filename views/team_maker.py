@@ -87,7 +87,7 @@ class TeamMaker:
         self.df = get_players_stat()
 
         with st.form(key="TeamMaker"):
-            col1, col2, col3, col4, col5, _ = st.columns([30, 15, 15, 15, 15, 10])
+            col1, col2, _ = st.columns([30, 30, 40])
 
             with col1:
                 for idx, row in self.df.iterrows():
@@ -98,15 +98,12 @@ class TeamMaker:
                 self.batting_weight = st.number_input(label="Batting Weight", min_value=0.0, \
                                                       max_value=1.0, value=self.batting_weight)
 
-            with col3:
                 self.bowling_weight = st.number_input(label="Bowling Weight", min_value=0.0, \
                                                       max_value=1.0, value=self.bowling_weight)
 
-            with col4:
                 self.fielding_weight = st.number_input(label="Fielding Weight", min_value=0.0, \
                                                       max_value=1.0, value=self.fielding_weight)
 
-            with col5:
                 st.slider(label="Randomness", min_value=0.0, max_value=1.0)
 
             col1, _ = st.columns([10, 90])
@@ -166,7 +163,6 @@ class TeamMaker:
                     
                     st.markdown("&nbsp;")
                     st.markdown("### Detail scores of all the players")
-                    col1, _ = st.columns([50, 50])
+                    col1, _ = st.columns([99, 1])
                     with col1:
-                        styler = self.df.style.hide(axis='index')
-                        st.write(styler.to_html(), unsafe_allow_html=True)
+                        st.dataframe(self.df)
