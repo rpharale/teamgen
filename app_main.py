@@ -1,6 +1,6 @@
 import streamlit as st
-from tools.utils import load_css
 from streamlit_option_menu import option_menu
+from tools.utils import load_css
 from views.team_maker import TeamMaker
 from views.rule_book import RuleBook
 from views.settings import Settings
@@ -29,7 +29,7 @@ class TeamMakerApp:
     def __init__(self):
         self.menuItem = None
         self.model = None
-    
+
     def run(self):
         if self.menuItem == self.model.option1:
             TeamMaker().view(TeamMaker.Model())
@@ -58,7 +58,7 @@ class TeamMakerApp:
         with st.sidebar:
             st.markdown("---")
             st.text("User: Admin")
-            st.text("Version: 0.0.1")
+            st.text("Version: 0.0.2")
             logout = st.button("Logout")
             st.markdown("---")
             st.markdown("TeamMaker is a platform that provides access to all types of tools, resources " + \
