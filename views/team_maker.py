@@ -7,7 +7,6 @@ import io
 def get_players_stat():
     print("Fetching content")
     PLAYERS_INFO_CSV_URL = st.secrets["players_info"]["PLAYERS_INFO_CSV_URL"]
-    print(f"PLAYERS_INFO_CSV_URL={PLAYERS_INFO_CSV_URL}")
     s = requests.get(PLAYERS_INFO_CSV_URL).content
     df = pd.read_csv(io.StringIO(s.decode('utf-8')))
     return df
