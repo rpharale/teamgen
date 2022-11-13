@@ -1,7 +1,11 @@
+import io
 import streamlit as st
 import pandas as pd
 import requests
-import io
+import numpy as np
+
+# Set the random seeds
+np.random.seed(100)
 
 #@st.cache
 def get_players_stat():
@@ -18,15 +22,29 @@ def create_teams(df, players_available):
     team_b = []
     team_a_score, team_b_score = 0, 0
     team_a_scores, team_b_scores = [], []
-    players_to_scores_map = dict(zip(df.PlayerName, df.TotalScore))
+
+    players_to_scores_map = dict(zip(df.PlayerName, df.NoisyScore))
     # Keep only the available players in the dict
     players_to_scores_map = {k: v for k,v in players_to_scores_map.items() if k in players_available}
     # Sort the players as per their scores
     players_to_scores_map = dict(sorted(players_to_scores_map.items(), key=lambda item: item[1], reverse=True))
     max_players_per_team = len(players_available) // 2
+
+    # Enforce priors
+    # Force twins to be in opposite teams
+    if "Satwik" in players_available and "Shashank" in players_available:
+        team_a += ["Satwik"]
+        team_b += ["Shashank"]
+
     for p, s in players_to_scores_map.items():
+        if (p in team_a):
+            team_a_score += s
+            team_a_scores.append(s)
+        elif (p in team_b):
+            team_b_score += s
+            team_b_scores.append(s)            
         # If any team has reached the max limit, stop adding to that team.
-        if (len(team_a) == max_players_per_team):
+        elif (len(team_a) == max_players_per_team):
             team_b.append(p)
             team_b_score += s
             team_b_scores.append(s)
@@ -42,8 +60,8 @@ def create_teams(df, players_available):
             team_b.append(p)
             team_b_score += s
             team_b_scores.append(s)
-        
-    
+
+
     # Handle the case of odd players
     if len(team_a) > len(team_b):
         team_b = team_b + team_a[-1:]
@@ -65,7 +83,10 @@ class TeamMaker:
         self.batting_weight = 0.4
         self.bowling_weight = 0.4
         self.fielding_weight = 0.2
+        self.randomness = 0.0
         self.output_container = None
+        self.min_noisy_score = 10
+        self.max_noisy_score = 99
 
     def form_callback(self):
         self.players_available = set()
@@ -103,7 +124,7 @@ class TeamMaker:
                 self.fielding_weight = st.number_input(label="Fielding Weight", min_value=0.0, \
                                                       max_value=1.0, value=self.fielding_weight)
 
-                st.slider(label="Randomness", min_value=0.0, max_value=1.0)
+                self.randomness = st.slider(label="Randomness", min_value=0, max_value=100)
 
             col1, _ = st.columns([10, 90])
             with col1:
@@ -119,6 +140,9 @@ class TeamMaker:
         # Calculate the aggregate scores
         self.df['TotalScore'] = self.df["BattingScore"] * self.batting_weight + self.df["BowlingScore"] * \
             self.bowling_weight + self.df['FieldingScore'] * self.fielding_weight
+        # 95% data in a normal distribution lies within 2 standard deviation.
+        self.df['NoisyScore'] = np.random.normal(self.df['TotalScore'], self.randomness/2.0)
+        self.df['NoisyScore'] = self.df['NoisyScore'].clip(lower=self.min_noisy_score, upper=self.max_noisy_score)
         
         if self.submit_button:
             team_a, team_b, team_a_scores, team_b_scores = create_teams(self.df, self.players_available)
@@ -139,13 +163,22 @@ class TeamMaker:
                 
             with st.expander("Stats"):
                 col1, _ = st.columns([50, 50])
+                # Calculate the Noisy score stat for both the teams
+                total_score_map = dict(zip(self.df.PlayerName, self.df.NoisyScore))
+                team_a_score = sum([v for k, v in total_score_map.items() if k in team_a])
+                team_b_score = sum([v for k, v in total_score_map.items() if k in team_b])
+                with col1:
+                    st.write(f"Avg Noisy score of Team A: {team_a_score / len(team_a):.2f}")
+                    st.write(f"Avg Noisy score of Team b: {team_b_score / len(team_b):.2f}")
+            
+                # Calculate the Total score stat for both the teams
                 total_score_map = dict(zip(self.df.PlayerName, self.df.TotalScore))
                 team_a_score = sum([v for k, v in total_score_map.items() if k in team_a])
                 team_b_score = sum([v for k, v in total_score_map.items() if k in team_b])
                 with col1:
-                    st.write(f"Avg score of Team A: {team_a_score / len(team_a):.2f}")
-                    st.write(f"Avg score of Team b: {team_b_score / len(team_b):.2f}")
-            
+                    st.write(f"Avg true score of Team A: {team_a_score / len(team_a):.2f}")
+                    st.write(f"Avg true score of Team b: {team_b_score / len(team_b):.2f}")
+
             if st.session_state["user_name"] == "admin":
                 with st.expander("Scores"):
                     col1, col2, _ = st.columns([30, 30, 40])
